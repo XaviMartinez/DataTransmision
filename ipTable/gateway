@@ -1,0 +1,75 @@
+#!/bin/bash
+
+## Flush
+iptables --flush
+iptables -t nat --flush
+iptables -t filter --flush
+
+iptables -X BLACKLIST
+iptables -X WHITELIST
+
+
+## 1)
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+
+## 2)
+iptables -t nat -A POSTROUTING -j SNAT -o eth0 --to 192.168.1.2
+
+
+## 4)
+iptables -t filter -A FORWARD -m tos --tos 0x02 -j DROP
+iptables -t filter -A FORWARD -m tos --tos 0x04 -j DROP
+
+
+## 6)
+iptables -A INPUT -j LOG --log-level 4 --log-prefix "IP_INPUT: "
+iptables -A OUTPUT -j LOG --log-level 4 --log-prefix "IP_OUTPUT: "
+iptables -A FORWARD -j LOG --log-level 4 --log-prefix "IP_FORWARD: "
+
+if [ -f /etc/syslog.conf.back ]
+then
+    cp /etc/syslog.conf.back /etc/syslog.conf
+else
+    cp /etc/syslog.conf /etc/syslog.conf.back
+fi
+
+if [ -f /var/log/iptables ]
+then
+    rm /var/log/iptables
+fi
+
+echo "kern.warning /var/log/iptables" >> /etc/syslog.conf
+/etc/init.d/sysklogd restart
+/etc/init.d/klogd restart
+
+
+## 7)
+iptables --new-chain BLACKLIST
+iptables --new-chain WHITELIST
+
+iptables -A BLACKLIST -s 192.168.2.2    -d 192.168.2.1 -j DROP
+iptables -A BLACKLIST -s 192.168.2.3    -d 192.168.2.1 -j DROP
+iptables -A BLACKLIST -s 192.168.2.4    -d 192.168.2.1 -j DROP
+iptables -A BLACKLIST -s 192.168.2.5    -d 192.168.2.1 -j DROP
+iptables -A BLACKLIST -s 192.168.2.0/24 -d 192.168.2.1 -j ACCEPT
+
+iptables -A WHITELIST -s 192.168.2.6   -d 192.168.2.1 -j ACCEPT
+iptables -A WHITELIST -s 192.168.2.7   -d 192.168.2.1 -j ACCEPT
+iptables -A WHITELIST -s 192.168.2.8   -d 192.168.2.1 -j ACCEPT
+iptables -A WHITELIST -s 192.168.2.9   -d 192.168.2.1 -j ACCEPT
+iptables -A WHITELIST -s 192.168.2.0/24 -d 192.168.2.1 -j DROP
+
+iptables -t filter -A INPUT -p tcp --dport 80 -j BLACKLIST
+iptables -t filter -A INPUT -p tcp --dport 22 -j WHITELIST
+
+
+## 8)
+iptables -t filter -A FORWARD -p tcp --dport 21 -d 130.206.1.5 -j ACCEPT
+iptables -t filter -A FORWARD -d 158.109.79.0/24 -j ACCEPT
+iptables -t filter -A FORWARD -s 192.168.2.0/24  -j DROP
+
+
+## 9)
+iptables -t filter -A INPUT -p udp --dport 33434:33534 -j DROP
+

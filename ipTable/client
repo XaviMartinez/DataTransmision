@@ -1,0 +1,51 @@
+#!/bin/bash
+
+## Flush
+iptables --flush
+iptables -t mangle --flush
+
+
+## 3)
+echo "Ping test (should work): "
+ping -c 1 www.google.com
+
+
+## 4)
+iptables -t mangle -A OUTPUT -j TOS --set-tos 0x02 -m owner --uid-owner user1
+iptables -t mangle -A OUTPUT -j TOS --set-tos 0x04 -m owner --uid-owner user2
+
+
+## 5)
+echo "Ping user1 (should fail): "
+su user1 -c 'ping -c 1 www.google.com'
+
+echo "Ping user2 (should fail): "
+su user2 -c 'ping -c 1 www.google.com'
+
+echo "Ping user3 (hsould work): "
+su user3 -c 'ping -c 1 www.google.com'
+
+echo "Ping user4 (should work): "
+su user4 -c 'ping -c 1 www.google.com'
+
+
+## 6)
+iptables -t mangle -A OUTPUT -j LOG --log-level 4 --log-prefix "IP_OUTPUT: " -m owner --uid-owner user1
+iptables -t mangle -A OUTPUT -j LOG --log-level 4 --log-prefix "IP_OUTPUT: " -m owner --uid-owner user2
+
+if [ -f /etc/syslog.conf.back ]
+then
+    cp /etc/syslog.conf.back /etc/syslog.conf
+else
+    cp /etc/syslog.conf /etc/syslog.conf.back
+fi
+
+if [ -f /var/log/iptables ]
+then
+    rm /var/log/iptables
+fi
+
+echo "kern.warning /var/log/iptables" >> /etc/syslog.conf
+/etc/init.d/sysklogd restart
+/etc/init.d/klogd restart
+

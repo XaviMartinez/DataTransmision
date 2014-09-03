@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# $1 ruleNumber
+# $2 jumpAction
+
+NetID=192.168.2.$[32*$1]/27
+
+if [ $2 == 1 ]
+then
+    echo "DROP for $NetID"
+    iptables -t nat -R POSTROUTING $1 -s $NetID -j DROP
+else
+    echo "MASQUERADE for $NetID"
+    iptables -t nat -R POSTROUTING $1 -s $NetID -j MASQUERADE
+fi
+

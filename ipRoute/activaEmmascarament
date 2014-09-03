@@ -1,0 +1,22 @@
+#!/bin/bash
+
+## Flush
+iptables --flush
+iptables -t nat --flush
+
+## 0)
+ip route add default via 192.168.0.1
+ping -c 1 google.com
+
+## 1)
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+## 2
+iptables -t nat -A POSTROUTING -s 192.168.2.32/27  -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.168.2.64/27  -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.168.2.96/27  -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.168.2.128/27 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.168.2.160/27 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.168.2.192/27 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.168.2.224/27 -j MASQUERADE
+

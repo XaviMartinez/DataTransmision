@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# $1 ethX
+# $2 ruleNumber
+# $3 speedLimit
+
+tc qdisc replace dev eth$[$1] parent 1:$[$2] handle $[$2]0: tbf rate $[$3]kbit latency 50ms burst 1540
+

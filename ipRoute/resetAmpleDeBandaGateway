@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# $1 ethX
+# $2 speedLimit
+
+tc qdisc change dev eth0 root handle 1: prio bands 8 priomap 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+tc qdisc change dev eth1 root handle 1: prio bands 8 priomap 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+#tc qdisc replace dev eth$[$1] parent 1:1 handle 10: tbf rate $[$2]kbit latency 50ms burst 1540

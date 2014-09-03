@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ -f /etc/syslog.conf.back ]
+then
+    cp /etc/syslog.conf.back /etc/syslog.conf
+else
+    cp /etc/syslog.conf /etc/syslog.conf.back
+fi
+
+if [ -f /var/log/mfw.log ]
+then
+    rm /var/log/mfw.log
+fi
+
+echo "kern.info /var/log/mfw.log" >> /etc/syslog.conf
+/etc/init.d/sysklogd restart
+/etc/init.d/klogd restart
